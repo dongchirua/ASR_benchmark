@@ -8,6 +8,11 @@ import os
 import sys
 import asr_speechmatics
 import codecs
+import requests
+import re
+from time import sleep
+# import unicode
+
 
 def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
     '''
@@ -16,22 +21,28 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
      - transcription_skipped: Boolean indicating if the speech file was sent to the ASR API.
     '''
     transcription_json = ''
-    transcription_filepath_base = '.'.join(speech_filepath.split('.')[:-1]) + '_'  + asr_system
-    transcription_filepath_text = transcription_filepath_base  + '.txt'
-    transcription_filepath_json = transcription_filepath_base  + '.json'
+    transcription_filepath_base = '.'.join(speech_filepath.split('.')[:-1]) + '_' + asr_system
+    transcription_filepath_text = transcription_filepath_base + '.txt'
+    transcription_filepath_json = transcription_filepath_base + '.json'
 
     # If there already exists a transcription file,  we may skip it depending on the user settings.
     if os.path.isfile(transcription_filepath_text):
-        existing_transcription = codecs.open(transcription_filepath_text, 'r', settings.get('general','predicted_transcription_encoding')).read()
+        existing_transcription = codecs.open(transcription_filepath_text, 'r',
+                                             settings.get('general', 'predicted_transcription_encoding')).read()
         is_transcription_file_empty = len(existing_transcription.strip()) == 0
-        if not is_transcription_file_empty and not settings.getboolean('general','overwrite_non_empty_transcriptions'):
-            print('Skipped speech file {0} because the file {1} already exists and is not empty.'.format(speech_filepath,transcription_filepath_text))
-            print('Change the setting `overwrite_non_empty_transcriptions` to True if you want to overwrite existing transcriptions')
+        if not is_transcription_file_empty and not settings.getboolean('general', 'overwrite_non_empty_transcriptions'):
+            print(
+                'Skipped speech file {0} because the file {1} already exists and is not empty.'.format(speech_filepath,
+                                                                                                       transcription_filepath_text))
+            print(
+                'Change the setting `overwrite_non_empty_transcriptions` to True if you want to overwrite existing transcriptions')
             transcription_skipped = True
             return existing_transcription, transcription_skipped
-        if is_transcription_file_empty and not settings.getboolean('general','overwrite_empty_transcriptions'):
-            print('Skipped speech file {0} because the file {1} already exists and is empty.'.format(speech_filepath,transcription_filepath_text))
-            print('Change the setting `overwrite_empty_transcriptions` to True if you want to overwrite existing transcriptions')
+        if is_transcription_file_empty and not settings.getboolean('general', 'overwrite_empty_transcriptions'):
+            print('Skipped speech file {0} because the file {1} already exists and is empty.'.format(speech_filepath,
+                                                                                                     transcription_filepath_text))
+            print(
+                'Change the setting `overwrite_empty_transcriptions` to True if you want to overwrite existing transcriptions')
             transcription_skipped = True
             return existing_transcription, transcription_skipped
 
@@ -43,7 +54,7 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
     transcription = ''
     asr_could_not_be_reached = False
     asr_timestamp_started = time.time()
-    speech_language = settings.get('general','speech_language')
+    speech_language = settings.get('general', 'speech_language')
     if asr_system == 'google':
         # recognize speech using Google Speech Recognition
         try:
@@ -54,7 +65,8 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
             transcription_json = response
 
             actual_result = response
-            if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise sr.UnknownValueError()
+            if not isinstance(actual_result, dict) or len(
+                actual_result.get("alternative", [])) == 0: raise sr.UnknownValueError()
 
             if "confidence" in actual_result["alternative"]:
                 # return alternative with highest confidence score
@@ -74,10 +86,12 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     elif asr_system == 'googlecloud':
         # recognize speech using Google Cloud Speech
-        GOOGLE_CLOUD_SPEECH_CREDENTIALS_filepath = settings.get('credentials','google_cloud_speech_credentials_filepath')
+        GOOGLE_CLOUD_SPEECH_CREDENTIALS_filepath = settings.get('credentials',
+                                                                'google_cloud_speech_credentials_filepath')
         GOOGLE_CLOUD_SPEECH_CREDENTIALS = codecs.open(GOOGLE_CLOUD_SPEECH_CREDENTIALS_filepath, 'r', 'UTF-8').read()
         try:
-            response = r.recognize_google_cloud(audio, credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS, show_all=True, language=speech_language)
+            response = r.recognize_google_cloud(audio, credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS, show_all=True,
+                                                language=speech_language)
             transcription_json = response
             if "results" not in response or len(response["results"]) == 0: raise sr.UnknownValueError()
             transcript = ""
@@ -94,7 +108,7 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     # recognize speech using Wit.ai
     elif asr_system == 'wit':
-        WIT_AI_KEY = settings.get('credentials','wit_ai_key')
+        WIT_AI_KEY = settings.get('credentials', 'wit_ai_key')
         print("Calling the Wit.ai API")
         try:
             response = r.recognize_wit(audio, key=WIT_AI_KEY, show_all=True)
@@ -111,12 +125,13 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     # recognize speech using Microsoft Bing Voice Recognition
     elif asr_system == 'microsoft':
-        BING_KEY = settings.get('credentials','bing_key')
+        BING_KEY = settings.get('credentials', 'bing_key')
         print('Calling the Microsoft Bing Voice Recognition API')
         try:
-            response =  r.recognize_bing(audio, key=BING_KEY, show_all=True, language=speech_language)
+            response = r.recognize_bing(audio, key=BING_KEY, show_all=True, language=speech_language)
             transcription_json = response
-            if "RecognitionStatus" not in response or response["RecognitionStatus"] != "Success" or "DisplayText" not in response:
+            if "RecognitionStatus" not in response or response[
+                "RecognitionStatus"] != "Success" or "DisplayText" not in response:
                 raise sr.UnknownValueError()
             transcription = response["DisplayText"]
 
@@ -129,12 +144,13 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     elif asr_system == 'houndify':
         # recognize speech using Houndify
-        HOUNDIFY_CLIENT_ID = settings.get('credentials','houndify_client_id')
-        HOUNDIFY_CLIENT_KEY = settings.get('credentials','houndify_client_key')
+        HOUNDIFY_CLIENT_ID = settings.get('credentials', 'houndify_client_id')
+        HOUNDIFY_CLIENT_KEY = settings.get('credentials', 'houndify_client_key')
 
         print("Calling the Houndify API")
         try:
-            response = r.recognize_houndify(audio, client_id=HOUNDIFY_CLIENT_ID, client_key=HOUNDIFY_CLIENT_KEY, show_all=True)
+            response = r.recognize_houndify(audio, client_id=HOUNDIFY_CLIENT_ID, client_key=HOUNDIFY_CLIENT_KEY,
+                                            show_all=True)
             transcription_json = response
 
             if "Disambiguation" not in response or response["Disambiguation"] is None:
@@ -151,13 +167,15 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     # recognize speech using IBM Speech to Text
     elif asr_system == 'ibm':
-        IBM_USERNAME = settings.get('credentials','ibm_username')
-        IBM_PASSWORD = settings.get('credentials','ibm_password')
+        IBM_USERNAME = settings.get('credentials', 'ibm_username')
+        IBM_PASSWORD = settings.get('credentials', 'ibm_password')
         try:
-            response = r.recognize_ibm(audio, username=IBM_USERNAME, password=IBM_PASSWORD, show_all=True, language=speech_language)
+            response = r.recognize_ibm(audio, username=IBM_USERNAME, password=IBM_PASSWORD, show_all=True,
+                                       language=speech_language)
             transcription_json = response
 
-            if "results" not in response or len(response["results"]) < 1 or "alternatives" not in response["results"][0]:
+            if "results" not in response or len(response["results"]) < 1 or "alternatives" not in response["results"][
+                0]:
                 raise sr.UnknownValueError()
 
             transcription = []
@@ -177,10 +195,12 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     elif asr_system == 'speechmatics':
         # recognize speech using Speechmatics Speech Recognition
-        speechmatics_id = settings.get('credentials','speechmatics_id')
-        speechmatics_token = settings.get('credentials','speechmatics_token')
+        speechmatics_id = settings.get('credentials', 'speechmatics_id')
+        speechmatics_token = settings.get('credentials', 'speechmatics_token')
         print('speech_filepath: {0}'.format(speech_filepath))
-        transcription, transcription_json = asr_speechmatics.transcribe_speechmatics(speechmatics_id,speechmatics_token,speech_filepath,speech_language)
+        transcription, transcription_json = asr_speechmatics.transcribe_speechmatics(speechmatics_id,
+                                                                                     speechmatics_token,
+                                                                                     speech_filepath, speech_language)
         try:
             print('Speechmatics  transcription is: {0}'.format(transcription))
         except:
@@ -189,26 +209,43 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
 
     elif asr_system == 'amazon':
         try:
-            bot_name = settings.get('credentials','amazon_bot_name')
-            bot_alias = settings.get('credentials','amazon_bot_alias')
-            user_id = settings.get('credentials','amazon_user_id')
-            transcription,transcription_json = recognize_amazon(audio, bot_name, bot_alias, user_id,
-                     content_type="audio/l16; rate=16000; channels=1", access_key_id=settings.get('credentials','amazon_access_key_id'),
-                     secret_access_key=settings.get('credentials','amazon_secret_access_key'), region=settings.get('credentials','amazon_region'))
+            bot_name = settings.get('credentials', 'amazon_bot_name')
+            bot_alias = settings.get('credentials', 'amazon_bot_alias')
+            user_id = settings.get('credentials', 'amazon_user_id')
+            transcription, transcription_json = recognize_amazon(audio, bot_name, bot_alias, user_id,
+                                                                 content_type="audio/l16; rate=16000; channels=1",
+                                                                 access_key_id=settings.get('credentials',
+                                                                                            'amazon_access_key_id'),
+                                                                 secret_access_key=settings.get('credentials',
+                                                                                                'amazon_secret_access_key'),
+                                                                 region=settings.get('credentials', 'amazon_region'))
         except sr.UnknownValueError:
             print("Amazon not process the speech transcription request")
 
-    else: raise ValueError("Invalid asr_system. asr_system = {0}".format(asr_system))
+    elif asr_system == 'vais':
+        try:
+            api_key = settings.get('credentials', 'vais_api_key')
+            audiosource_id = settings.get('credentials', 'vais_audiosource_id')
+            vais_url_upload = settings.get('credentials', 'vais_url_upload')
+            vais_retrive_text = settings.get('credentials', 'vais_retrive_text')
+            vais_analytics = settings.get('credentials', 'vais_analytics')
+            transcription, transcription_json = recognize_vais((vais_url_upload, vais_retrive_text, vais_analytics), audio,
+                                                               speech_filepath, api_key, audiosource_id)
+        except sr.UnknownValueError:
+            print("VAIS not process the speech transcription request")
+    else:
+        raise ValueError("Invalid asr_system. asr_system = {0}".format(asr_system))
 
     asr_timestamp_ended = time.time()
     asr_time_elapsed = asr_timestamp_ended - asr_timestamp_started
     print('asr_time_elapsed: {0:.3f} seconds'.format(asr_time_elapsed))
-    #time.sleep(2)   # Delay in seconds
-    #if len(transcription) == 0 and asr_could_not_be_reached: return transcription
+    # time.sleep(2)   # Delay in seconds
+    # if len(transcription) == 0 and asr_could_not_be_reached: return transcription
 
     if save_transcription:
-        #print('Transcription saved in {0} and {1}'.format(transcription_filepath_text,transcription_filepath_json))
-        codecs.open(transcription_filepath_text,'w', settings.get('general','predicted_transcription_encoding')).write(transcription)
+        # print('Transcription saved in {0} and {1}'.format(transcription_filepath_text,transcription_filepath_json))
+        codecs.open(transcription_filepath_text, 'w',
+                    settings.get('general', 'predicted_transcription_encoding')).write(transcription)
 
     print('transcription: {0}'.format(transcription))
     results = {}
@@ -218,16 +255,17 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
     results['asr_timestamp_ended'] = asr_timestamp_ended
     results['asr_timestamp_started'] = asr_timestamp_started
 
-
-    json.dump(results, codecs.open(transcription_filepath_json, 'w', settings.get('general','predicted_transcription_encoding')), indent = 4, sort_keys=True)
+    json.dump(results, codecs.open(transcription_filepath_json, 'w',
+                                   settings.get('general', 'predicted_transcription_encoding')), indent=4,
+              sort_keys=True)
 
     transcription_skipped = False
     return transcription, transcription_skipped
 
 
-
 def recognize_amazon(audio_data, bot_name, bot_alias, user_id,
-                     content_type="audio/l16; rate=16000; channels=1", access_key_id=None, secret_access_key=None, region=None):
+                     content_type="audio/l16; rate=16000; channels=1", access_key_id=None, secret_access_key=None,
+                     region=None):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
 
@@ -268,3 +306,45 @@ def recognize_amazon(audio_data, bot_name, bot_alias, user_id,
 
     return response["inputTranscript"], response
 
+
+def recognize_vais(urls, audio_data, source, api_key, audiosource_id):
+    assert isinstance(audio_data, sr.AudioData), "Data must be audio data"
+    assert isinstance(api_key, str), "``api_key`` must be a string"
+    assert isinstance(audiosource_id, str), "``audiosource_id`` must be a string"
+
+    url_upload, ulr_retrive, url_analytics = urls
+    headers = {
+        'Api-key': api_key
+    }
+
+    # step 1
+    payload = {'audiosource_id': audiosource_id}
+    files = [
+        ('audio', open(
+            os.path.join(os.path.dirname(__file__), source),
+            'rb'))
+    ]
+
+    response = requests.request("POST", url_upload, headers=headers, data=payload, files=files)
+    audio_id = response.json().get('id', None)
+    assert isinstance(audio_id, str)
+
+    # step 2
+    ulr_retrive = re.sub(':audio_id:', audio_id, ulr_retrive)
+    counter = 1
+    while True:
+        response = requests.request("GET", ulr_retrive, headers=headers, data={})
+        status = response.json().get('audio_status', 3)
+        if status == 4:
+            break
+        else:
+            sleep(0.125 * counter)
+            counter += 1
+
+    text = response.json().get('asr/normal').get('data').get('full_text')
+
+    # step 3
+    url_analytics = url_analytics + audio_id
+    response = requests.request("GET", url_analytics, headers=headers, data={})
+
+    return text, response.json()
