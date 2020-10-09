@@ -11,6 +11,7 @@ import time
 import collections
 import shutil
 import codecs
+import refine_text
 
 
 def main():
@@ -133,11 +134,9 @@ def main():
                     gold_transcription_filepath_text = gold_transcription_filepath_base + '.txt'
                     gold_transcription = codecs.open(gold_transcription_filepath_text, 'r',
                                                      settings.get('general', 'gold_transcription_encoding')).read()
-                    gold_transcription = metrics.normalize_text(gold_transcription, lower_case=True,
-                                                                remove_punctuation=True, write_numbers_in_letters=True)
-                    predicted_transcription = metrics.normalize_text(predicted_transcription, lower_case=True,
-                                                                     remove_punctuation=True,
-                                                                     write_numbers_in_letters=True)
+
+                    gold_transcription = refine_text.normalize_golden_text(gold_transcription)
+                    predicted_transcription = refine_text.normalize_pred_text(predicted_transcription)
 
                     all_predicted_transcription_file.write('{0}\n'.format(predicted_transcription))
                     all_gold_transcription_filepath.write('{0}\n'.format(gold_transcription))
