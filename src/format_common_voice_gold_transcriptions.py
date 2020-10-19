@@ -3,17 +3,21 @@ Create the gold transcription files for the Common Voice dataset
 wget https://common-voice-data-download.s3.amazonaws.com/cv_corpus_v1.tar.gz
 '''
 
-import glob
 import re
 import os
 import shutil
 import pandas as pd
+import click
 
 
-def main():
-    data_folder = os.path.join('..', 'data', 'common-voice')
-    df = pd.read_csv(os.path.join('..', 'data', 'clips_202010021436.csv'))
-    out_folder = os.path.join('..', 'data', 'vinbrain')
+@click.command()
+@click.option('--input_folder', default='../data/common-voice/')
+@click.option('--save_folder', default='../data/vinbrain/')
+@click.option('--speech_text', default='../data/clips_202010021436.csv')
+def main(input_folder, save_folder, speech_text):
+    data_folder = input_folder
+    df = pd.read_csv(speech_text)
+    out_folder = save_folder
 
     for index, row in df.iterrows():
         speech_filepath = row['path']

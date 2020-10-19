@@ -3,3 +3,6 @@ oauth2client
 requests
 SpeechRecognition
 pydub
+click
+grpcio==1.27.1
+protobuf
