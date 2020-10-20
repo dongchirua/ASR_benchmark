@@ -5,13 +5,13 @@ Use settings.ini to configure the benchmark.
 import configparser
 import glob
 import os
-import transcribe
-import metrics
+from src import transcribe
+from src import metrics
 import time
 import collections
 import shutil
 import codecs
-import refine_text
+from src import refine_text
 
 
 def main():

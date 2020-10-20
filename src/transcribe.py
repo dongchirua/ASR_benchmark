@@ -222,7 +222,7 @@ def transcribe(speech_filepath, asr_system, settings, save_transcription=True):
         except sr.UnknownValueError:
             print("Amazon not process the speech transcription request")
 
-    elif asr_system == 'vais':
+    elif asr_system == 'vais' or asr_system == 'vais_md':
         try:
             api_key = settings.get('credentials', 'vais_api_key')
             audiosource_id = settings.get('credentials', 'vais_audiosource_id')
