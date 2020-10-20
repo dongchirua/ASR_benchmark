@@ -60,7 +60,7 @@ def normalize_fraction(text):
 
 
 def normalize_en_hour(text):
-    regex = r"\d+h"
+    regex = r"\d+h\s+"
     matches = re.finditer(regex, text, re.MULTILINE)
     flag = False
     for matchNum, match in enumerate(matches, start=1):
@@ -77,7 +77,7 @@ def normalize_en_hour(text):
 
 
 def normalize_vi_hour(text):
-    regex = r"(\d+g)|(\d+\sg)"
+    regex = r"(\d+g\s+)|(\d+\sg\s+)"
     matches = re.finditer(regex, text, re.MULTILINE)
     flag = False
     for matchNum, match in enumerate(matches, start=1):
@@ -89,7 +89,7 @@ def normalize_vi_hour(text):
         flag = True
         break
     if flag:
-        return normalize_en_hour(text)
+        return normalize_vi_hour(text)
     return text
 
 
@@ -202,22 +202,23 @@ def normalize_pred_text(text: str) -> str:
 
 
 if __name__ == "__main__":
-    # print(normalize_golden_text(
-    #     "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
-    #     "trên ngoài mô truyến, nốt lớn kích thước ~ "
-    #     "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
-    # ))
-    # print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
-    # print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
-    # print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
-    # print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
-    # print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
-    # print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
-    # print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
-    # print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
-    # print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
+    print(normalize_golden_text(
+        "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
+        "trên ngoài mô truyến, nốt lớn kích thước ~ "
+        "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
+    ))
+    print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
+    print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
+    print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
+    print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
+    print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
+    print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
+    print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
+    print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
+    print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
     print(normalize_golden_text("sửa câu số 1 thành hình ảnh gai xương nhỏ mặt trước thân các đốt sống l3 l4 l5 và s1"))
-    # print('#' * 10)
+    print(normalize_golden_text("sửa câu sáu thành mờ nhẹ phần thấp phổi trái góc sườn hoành 2 bên nhọn"))
+    print('#' * 100)
     print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
     print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))
     print(normalize_pred_text("giới hạn rõ ở vùng một phần tư"))
