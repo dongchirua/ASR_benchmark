@@ -189,11 +189,15 @@ def group_spine_annotation(text):
     txt = text.split()
     new_text = []
     i = 0
-    while i <= len(txt)-1:
-        if txt[i] in set(['c', 'd', 'l', 's']) and txt[i+1].isdigit():
-            new_text.append(txt[i] + txt[i+1])
-            i = i + 2
-        else:
+    while i < len(txt):
+        flag = False
+        if txt[i] in set(['c', 'd', 'l', 's']):
+            if i+1 < len(txt):
+                if txt[i + 1].isdigit():
+                    new_text.append(txt[i] + txt[i + 1])
+                    i = i + 2
+                    flag = True
+        if flag is False:
             new_text.append(txt[i])
             i = i + 1
     return ' '.join(new_text)
@@ -205,7 +209,7 @@ def normalize_tokens(text):
     tokens = lm_tokenizer.tokenize(text)
     tokens = [translation_table.get(i, i) for i in tokens]
     text = ' '.join(tokens)
-    # text = replace_multiplication_text(text)
+    text = replace_multiplication_text(text)
     text = normalize_date(text)
     text = normalize_fraction(text)
     text = normalize_unit(text)
@@ -245,32 +249,34 @@ def normalize_pred_text(text: str) -> str:
 
 
 if __name__ == "__main__":
-    # print(normalize_golden_text("xóa câu tám"))
-    # print(normalize_golden_text(
-    #     "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
-    #     "trên ngoài mô truyến, nốt lớn kích thước ~ "
-    #     "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
-    # ))
-    # print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
-    # print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
-    # print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
-    # print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
-    # print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
-    # print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
-    # print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
-    # print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
-    # print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
-    # print(normalize_golden_text("sửa câu sáu thành mờ nhẹ phần thấp phổi trái góc sườn hoành 2 bên nhọn"))
-    # print(normalize_golden_text("Hình ảnh hẹp khe đĩa đệm C4C5, C6C7."))
-    # print(normalize_golden_text("nốt vi vôi hóa dạng lành tính ở ¼ dưới trong"))
-    # print(normalize_golden_text("vị trí 10 giờ cách núm vú khoảng 24 mm và vị trí 6h30 cá ch núm vú khoảng 7 mm "
-    #                             "có các nốt giảm âm nhỏ có tính chất tương tự kích thước lần lượt là "
-    #                             "khoảng 3,3 x 3,1 mm và khoảng 8,8 x 4,6 mm birads 3"))
-    # print('#' * 100)
-    # print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
-    # print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))
-    # print(normalize_pred_text("giới hạn rõ ở vùng một phần tư"))
-    # print(normalize_pred_text("nốt vi vôi hóa đơn độc gồm một phân tích ngoài"))
-    # print(normalize_pred_text("vị trí 11 g và 11h, 12g cách luồn vú"))
-    # print(normalize_pred_text("hình ảnh đậm xương do thoái hóa bờ trước trên thần các đốt sống l 2 l 3 l 4 l 5"))
+    print(normalize_golden_text("xóa câu tám"))
+    print(normalize_golden_text(
+        "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
+        "trên ngoài mô truyến, nốt lớn kích thước ~ "
+        "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
+    ))
+    print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
+    print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
+    print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
+    print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
+    print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
+    print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
+    print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
+    print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
+    print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
+    print(normalize_golden_text("sửa câu sáu thành mờ nhẹ phần thấp phổi trái góc sườn hoành 2 bên nhọn"))
+    print(normalize_golden_text("Hình ảnh hẹp khe đĩa đệm C4C5, C6C7."))
+    print(normalize_golden_text("nốt vi vôi hóa dạng lành tính ở ¼ dưới trong"))
+    print(normalize_golden_text("vị trí 10 giờ cách núm vú khoảng 24 mm và vị trí 6h30 cách núm vú khoảng 7 mm "
+                                "có các nốt giảm âm nhỏ có tính chất tương tự kích thước lần lượt là "
+                                "khoảng 3,3 x 3,1 mm và khoảng 8,8 x 4,6 mm birads 3"))
+    print('#' * 100)
+    print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
+    print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))
+    print(normalize_pred_text("giới hạn rõ ở vùng một phần tư"))
+    print(normalize_pred_text("nốt vi vôi hóa đơn độc gồm một phân tích ngoài"))
+    print(normalize_pred_text("vị trí 11 g và 11h, 12g cách luồn vú"))
+    print(normalize_pred_text("hình ảnh đậm xương do thoái hóa bờ trước trên thần các đốt sống l 2 l 3 l 4 l 5"))
     print(normalize_pred_text("thêm xơ dày tổ chức kẽ u thế vùng đáy phổi hai bên trước câu 11"))
+    print(normalize_pred_text("xương có gì nhẹ điểm bám gân gót và c"))
+    print(normalize_pred_text("bổ sung vòng rộng quai đê mờ c vào trước câu mộc"))
