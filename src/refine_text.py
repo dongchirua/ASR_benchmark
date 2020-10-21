@@ -60,7 +60,7 @@ def normalize_fraction(text):
 
 
 def normalize_en_hour(text):
-    regex = r"\d+h\s+"
+    regex = r"(\d+h\s+)|(\d+\sh\s+)|(\d+h\d+\s)"
     matches = re.finditer(regex, text, re.MULTILINE)
     flag = False
     for matchNum, match in enumerate(matches, start=1):
@@ -77,7 +77,7 @@ def normalize_en_hour(text):
 
 
 def normalize_vi_hour(text):
-    regex = r"(\d+g\s+)|(\d+\sg\s+)"
+    regex = r"(\d+g\s+)|(\d+\sg\s+)|(\d+g\d+\s)"
     matches = re.finditer(regex, text, re.MULTILINE)
     flag = False
     for matchNum, match in enumerate(matches, start=1):
@@ -131,6 +131,7 @@ def replace_gold_text(text):
     text = text.replace('xquang', 'x-quang ')
     text = text.replace('iii', '3 ')
     text = text.replace('ii', '2 ')
+    text = text.replace('cau', 'câu')
     return text
 
 
@@ -157,24 +158,66 @@ def normalize_date(text):
     return text
 
 
+def normalize_spine_annotation(text):
+    def is_spine_stuffs(txt):
+        txt_ = list(txt)
+        nlength = len(txt_)
+        flag = []
+        for i in range(0, nlength-1, 2):
+            if txt_[i] in set(['c', 'd', 'l', 's']) and txt_[i+1].isdigit():
+                flag.append(1)
+            else:
+                flag.append(0)
+        mask = [i for i in range(0, nlength, 2)]
+        if sum(flag) == len(mask):
+            return True
+        return False
+
+    new_text = []
+    for i in text.split():
+        if is_spine_stuffs(i):
+            text_ = list(i)
+            for j in range(0, len(i), 3):
+                text_.insert(j, ' ')
+            new_text.append(''.join(text_))
+        else:
+            new_text.append(i)
+    return ' '.join(new_text)
+
+
+def group_spine_annotation(text):
+    txt = text.split()
+    new_text = []
+    i = 0
+    while i <= len(txt)-1:
+        if txt[i] in set(['c', 'd', 'l', 's']) and txt[i+1].isdigit():
+            new_text.append(txt[i] + txt[i+1])
+            i = i + 2
+        else:
+            new_text.append(txt[i])
+            i = i + 1
+    return ' '.join(new_text)
+
+
 def normalize_tokens(text):
     lm_tokenizer = tokenization.LongMatchingTokenizer(bi_grams_path=os.path.join(current_dir, 'bi_grams.txt'),
                                                       tri_grams_path=os.path.join(current_dir, 'tri_grams.txt'))
     tokens = lm_tokenizer.tokenize(text)
     tokens = [translation_table.get(i, i) for i in tokens]
     text = ' '.join(tokens)
-    text = replace_multiplication_text(text)
+    # text = replace_multiplication_text(text)
     text = normalize_date(text)
     text = normalize_fraction(text)
     text = normalize_unit(text)
     text = normalize_en_hour(text)
     text = normalize_vi_hour(text)
-
+    text = normalize_spine_annotation(text)
     return text
 
 
 def normalize_golden_text(text: str) -> str:
     text = text.lower()
+    text = replace_gold_text(text)
 
     text = normalize_tokens(text)
 
@@ -183,7 +226,6 @@ def normalize_golden_text(text: str) -> str:
     text = re.sub(r'^.\s+', '', text)
     text = re.sub(r'\s+0+(.+)', r' \1', text)
     text = re.sub(r'^\.+', '', text)
-    text = replace_gold_text(text)
     text = metrics.normalize_text(text, lower_case=True,
                                   remove_punctuation=True)
     text = re.sub(' +', ' ', text)
@@ -197,30 +239,38 @@ def normalize_pred_text(text: str) -> str:
 
     text = metrics.normalize_text(text, lower_case=True,
                                   remove_punctuation=True)
+    text = group_spine_annotation(text)
     text = re.sub(' +', ' ', text)
     return text.strip()
 
 
 if __name__ == "__main__":
-    print(normalize_golden_text(
-        "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
-        "trên ngoài mô truyến, nốt lớn kích thước ~ "
-        "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
-    ))
-    print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
-    print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
-    print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
-    print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
-    print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
-    print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
-    print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
-    print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
-    print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
-    print(normalize_golden_text("sửa câu số 1 thành hình ảnh gai xương nhỏ mặt trước thân các đốt sống l3 l4 l5 và s1"))
-    print(normalize_golden_text("sửa câu sáu thành mờ nhẹ phần thấp phổi trái góc sườn hoành 2 bên nhọn"))
-    print('#' * 100)
-    print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
-    print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))
-    print(normalize_pred_text("giới hạn rõ ở vùng một phần tư"))
-    print(normalize_pred_text("nốt vi vôi hóa đơn độc gồm một phân tích ngoài"))
-    print(normalize_pred_text("vị trí 11 g và 11h, 12g cách luồn vú"))
+    # print(normalize_golden_text("xóa câu tám"))
+    # print(normalize_golden_text(
+    #     "Vú trái: Hình vài nốt mờ nhỏ có bờ đều, giới hạn rõ ở vùng 1/4 "
+    #     "trên ngoài mô truyến, nốt lớn kích thước ~ "
+    #     "3x5mm bên vú trái, 4 x 15 cm bên phải, 1.1x2mm ở giữa",
+    # ))
+    # print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
+    # print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
+    # print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
+    # print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
+    # print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
+    # print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
+    # print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
+    # print(normalize_golden_text(" Hình ảnh gãy 1/3 giữa xương đòn phải  đã được cố định bằng nẹp vít    Presence of 1/3 middle of right clavicle fractured, fixed by screw brace"))
+    # print(normalize_golden_text("Đọc kết quả chụp X quang cổ chân hai bên:   Hình ảnh gai xương nhẹ đầu dưới xương chày và xương gót hai bên dạng thoái hóa."))
+    # print(normalize_golden_text("sửa câu sáu thành mờ nhẹ phần thấp phổi trái góc sườn hoành 2 bên nhọn"))
+    # print(normalize_golden_text("Hình ảnh hẹp khe đĩa đệm C4C5, C6C7."))
+    # print(normalize_golden_text("nốt vi vôi hóa dạng lành tính ở ¼ dưới trong"))
+    # print(normalize_golden_text("vị trí 10 giờ cách núm vú khoảng 24 mm và vị trí 6h30 cá ch núm vú khoảng 7 mm "
+    #                             "có các nốt giảm âm nhỏ có tính chất tương tự kích thước lần lượt là "
+    #                             "khoảng 3,3 x 3,1 mm và khoảng 8,8 x 4,6 mm birads 3"))
+    # print('#' * 100)
+    # print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
+    # print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))
+    # print(normalize_pred_text("giới hạn rõ ở vùng một phần tư"))
+    # print(normalize_pred_text("nốt vi vôi hóa đơn độc gồm một phân tích ngoài"))
+    # print(normalize_pred_text("vị trí 11 g và 11h, 12g cách luồn vú"))
+    # print(normalize_pred_text("hình ảnh đậm xương do thoái hóa bờ trước trên thần các đốt sống l 2 l 3 l 4 l 5"))
+    print(normalize_pred_text("thêm xơ dày tổ chức kẽ u thế vùng đáy phổi hai bên trước câu 11"))
