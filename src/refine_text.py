@@ -120,7 +120,8 @@ translation_table = {
     'cen_ti_mét': 'cm',
     'xi_ti': 'ct',
     'x_quang': 'x-quang',
-    "tư_thế": 'tư thế'
+    "tư_thế": 'tư thế',
+    'bệnh_nhân': 'bệnh nhân',
 }
 
 
@@ -133,6 +134,8 @@ def replace_gold_text(text):
     text = text.replace('ii', '2 ')
     text = text.replace('iv', '4 ')
     text = text.replace('cau', 'câu')
+    text = text.replace('>', ' lớn hơn ')
+    text = text.replace('<', ' bé hơn ')
     return text
 
 
@@ -235,11 +238,11 @@ def normalize_tokens(text):
         else:
             new_token.append(i_)
         i = i + 1
-    text = ' '.join(new_token)
 
-    text = replace_multiplication_text(text)
+    text = ' '.join(new_token)
+    # text = replace_multiplication_text(text)
     text = normalize_date(text)
-    text = normalize_fraction(text)
+    # text = normalize_fraction(text)
     text = normalize_unit(text)
     text = normalize_en_hour(text)
     text = normalize_vi_hour(text)
@@ -253,7 +256,7 @@ def normalize_golden_text(text: str) -> str:
 
     text = normalize_tokens(text)
 
-    text = ' '.join([i for i in text.split() if i not in ("·", "₋")])
+    text = re.sub(r'(-\s){2}', '', text)
     text = text.replace('~', ' khoảng ')
     text = re.sub(r'^.\s+', '', text)
     text = re.sub(r'\s+0+(.+)', r' \1', text)
@@ -286,7 +289,7 @@ if __name__ == "__main__":
     # print(normalize_golden_text("sửa câu mười một thành một nốt vôi hóa dạng lành tính vị trí 12h trong xquang."))
     # print(normalize_golden_text("Mô vú có đậm độ cản quang ở mức trung bình ( Level III)"))
     # print(normalize_golden_text("Cơ hoành hai bên dâng cao do tư thế nằm."))
-    # print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
+    print(normalize_golden_text("₋Hình ảnh chấm vôi hóa 1/2 trên vú trái ₋Không thấy vôi hóa thành mạch trẻ trai 06 tuổi."))
     # print(normalize_golden_text("vú trái bất đối xứng ở vùng trong kích thước 4.3 cm cách núm vú 4.81 cm"))
     # print(normalize_golden_text("thêm hình nốt mờ nhỏ ngoại vi nửa dưới trường phổi phải ( không thay đổi so với phim chụp ngày 08/09/2017). vào xao câu bốn"))
     # print(normalize_golden_text(".............Mật độ mô vú: phân bố không đồng nhất có thể che lấp một số tổn thương nhỏ."))
@@ -300,7 +303,8 @@ if __name__ == "__main__":
     #                             "khoảng 3,3 x 3,1 mm và khoảng 8,8 x 4,6 mm birads 3"))
     # print(normalize_golden_text("Hình vài nốt mờ nhỏ có giới hạn rõ tập trung thành đám nhỏ ( không thấy thay đổi so với phim chụp ngày 30/7/2016)."))
     # print(normalize_golden_text('sửa câu 5 thành so sánh với phim chụp x-quang tuyến vú ngày 22 tháng 11 năm 2016 mật độ mô vú rất đặc hạn chế đánh giá vú phải bất đối xứng khu trú ở vùng ngoài kích thước .6 cm cách núm vú 7.1 cm'))
-    print(normalize_golden_text("---------------------------------------------------- ·Tổn thương cũ đốt 1 - 2 ngón IV tay trái."))
+    # print(normalize_golden_text("---------------------------------------------------- ·Tổn thương cũ đốt 1 - 2 ngón IV tay trái."))
+    # print(normalize_golden_text("Chỉ định (lý do bn đến khám): bệnh nhân nữ 59 tuổi, đi khám sức khỏe định kỳ, không có tiền sử ung thư vú của bản thân và gia đình,  mãn kinh 10 năm , không điều trị hoocmon nội tiết."))
     # print('#' * 100)
     # print(normalize_pred_text("Đề nghị kết hợp lâm sàng kết hợp chụp xi ti."))
     # print(normalize_pred_text("thêm lớp m nhỏ vùng đáy phổi trái kích thước 15 nhân hai mươi mi li mét vào sau Câu 1"))

@@ -1,13 +1,15 @@
 import numpy
 import re
 
+
 def normalize_text(text, lower_case=False, remove_punctuation=False):
     '''
     Perform text normalization
     '''
     if lower_case:
         text = text.lower()
-    custom_punctuation = r"""!"#$%&'()*+/:;<=>?@[\]^_`{|}~"""
+    # custom_punctuation = r"""!"#$%&'()*+/:;<=>?@[\]^_`{|}~"""
+    custom_punctuation = r"""!"#$%&'()*+:;<=>?@[\]^_`{|}~"""
     # different from string.punctuation
     table = str.maketrans({key: None for key in custom_punctuation})
     if remove_punctuation:

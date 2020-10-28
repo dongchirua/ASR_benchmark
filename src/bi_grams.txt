@@ -10,4 +10,5 @@
 'hai mươi',
 'xi ti',
 'tư thế',
-'x quang'}
+'x quang',
+'bệnh nhân'}
