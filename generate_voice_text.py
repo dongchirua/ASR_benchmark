@@ -14,7 +14,7 @@ def generate_text_voice(templates, finding: str) -> Tuple:
                                                     random.uniform(0, 1), \
                                                     random.uniform(0, 1), \
                                                     random.uniform(0, 1)
-    ind_case = np.argmax([prob_add, prob_del - 0.2, prob_modify, prob_nothing])
+    ind_case = np.argmax([prob_add - 0.1, prob_del - 0.5, prob_modify - 0.1, prob_nothing])
     if ind_case == 0:
         case = 'modify'
     elif ind_case == 1:
@@ -35,15 +35,16 @@ def generate_text_voice(templates, finding: str) -> Tuple:
         example = Template(example)
         text = example.substitute(mapping_dict)
         text = Template(text).substitute(number=number)
-        return text, case, number
+        return text, case, number, finding
     else:
-        return finding, None, None
+        return finding, None, None, finding
 
 
 @click.command()
 @click.option('--template_path')
 @click.option('--data_path')
-@click.option('--n_samples')
+@click.option('--n_samples', type=int)
+@click.option('--save_path')
 def run(template_path, data_path, n_samples, save_path):
     templates = json.loads(codecs.open(template_path, 'r', 'UTF-8').read())
     database = pd.read_excel(data_path)
@@ -56,8 +57,8 @@ def run(template_path, data_path, n_samples, save_path):
             tmp.append(rec_)
         tmp = list(set(tmp))
         records = records + tmp
-    df = pd.DataFrame(records, columns=['sentence', 'action', 'location'], dtype=str)
-    df.to_csv(save_path, index=False, encoding='UTF-8')
+    df = pd.DataFrame(records, columns=['sentence', 'action', 'location', 'raw'], dtype=str)
+    df.to_csv(save_path, index=False, encoding='utf-8-sig')
 
 
 if __name__ == "__main__":

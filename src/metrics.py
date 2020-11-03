@@ -12,10 +12,10 @@ def normalize_text(text, lower_case=False, remove_punctuation=False):
     custom_punctuation = r"""!"#$%&'()*+:;<=>?@[\]^_`{|}~"""
     # different from string.punctuation
     table = str.maketrans({key: None for key in custom_punctuation})
-    if remove_punctuation:
-        text = text.translate(table)
+    # if remove_punctuation:
+    #     text = text.translate(table)
     text = ' '.join(text.split())
-    text = re.sub(r"\s+,\s+", ' ', text)
+    # text = re.sub(r"\s+,\s+", ' ', text)
     text = re.sub(r"\.+\s+", ' ', text)
     text = re.sub(r"\s+\.+$", ' ', text)
     return text
